@@ -11,6 +11,12 @@ class Server:
         self.inputs = []  # used by select.select()
         self.connected_clients = set()  # exists only to monitor the NUMBER of connected clients and nothing more (for now)
 
+    def get_ip(self):
+        with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
+            s.connect(('8.8.8.8', 1))
+            ip = s.getsockname()[0]
+        return ip
+
     def _init_server(self):
         self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
