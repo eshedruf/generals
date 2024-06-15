@@ -1,16 +1,14 @@
 import pygame_menu
 from pygame_menu.examples import create_example_window
 from typing import Tuple, Any
-
-WIDTH = 900
-HEIGHT = 600
+from constants import *
 
 class GameMenu:
     def __init__(self):
-        self.surface = create_example_window('Example - Simple', (WIDTH, HEIGHT))
+        self.surface = create_example_window('Example - Simple', (MENU_WIDTH, MENU_HEIGHT))
         self.menu = pygame_menu.Menu(
-            width=WIDTH,
-            height=HEIGHT,
+            width=MENU_WIDTH,
+            height=MENU_HEIGHT,
             theme=pygame_menu.themes.THEME_BLUE,
             title='Game Menu',
         )
