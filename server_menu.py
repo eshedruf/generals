@@ -19,10 +19,10 @@ class ServerMenu:
     def display_settings_menu(self):
         with self.term.fullscreen(), self.term.cbreak():
             print(self.term.hide_cursor)
-            while True:
+            while not self._ready:
                 self._settings_header()
                 self._settings_options()
-                self.selected_option = self._settings_keypress(self.selected_option)
+                self._handle_keypress(self._settings_keypress)
 
     def _settings_header(self):
         print(self.term.clear)
@@ -32,7 +32,6 @@ class ServerMenu:
         print(self.term.center("---------------"))
 
     def _settings_options(self):
-        # Display menu options
         players_option = f"Players: {self.connection_count} (2-8)"
         not_ready_option = "Not Ready" if not self._ready else "Ready"
         options = [players_option, not_ready_option]
@@ -42,24 +41,27 @@ class ServerMenu:
             else:
                 print(self.term.center(option_text))
 
-    def _settings_keypress(self, selected_option):
+    def _handle_keypress(self, keypress_handler):
         key = self.term.inkey()
+        keypress_handler(key)
+
+    def _settings_keypress(self, key):
         if key.name == 'KEY_UP':
-            selected_option = MenuOption((selected_option.value - 1) % len(MenuOption))
+            self.selected_option = MenuOption((self.selected_option.value - 1) % len(MenuOption))
         elif key.name == 'KEY_DOWN':
-            selected_option = MenuOption((selected_option.value + 1) % len(MenuOption))
-        elif key.name == 'KEY_LEFT' and selected_option == MenuOption.PLAYERS_COUNT:
+            self.selected_option = MenuOption((self.selected_option.value + 1) % len(MenuOption))
+        elif key.name == 'KEY_LEFT' and self.selected_option == MenuOption.PLAYERS_COUNT:
             self.connection_count = max(2, self.connection_count - 1)
-        elif key.name == 'KEY_RIGHT' and selected_option == MenuOption.PLAYERS_COUNT:
+        elif key.name == 'KEY_RIGHT' and self.selected_option == MenuOption.PLAYERS_COUNT:
             self.connection_count = min(8, self.connection_count + 1)
-        elif key.name == 'KEY_ENTER' and selected_option == MenuOption.READY_STATUS and not self._ready:
+        elif key.name == 'KEY_ENTER' and self.selected_option == MenuOption.READY_STATUS:
             self._ready = True
-            self.display_waiting_menu()
-        return selected_option
 
     def display_waiting_menu(self):
         self.server.max_connections = self.connection_count
-        #threading.Thread(self.server.start()).start()  # לאדע לא עובד
+        t = threading.Thread(target=self.server.start)
+        t.start() # start the server
+        
         with self.term.fullscreen(), self.term.cbreak():
             print(self.term.hide_cursor)
             print(self.term.clear)
@@ -73,9 +75,14 @@ class ServerMenu:
                 print(self.term.move_x(1) + f"Connected Clients: {len(self.server.connected_clients)}")
                 time.sleep(1)
 
+    def run(self):
+        while not self._ready:
+            self.display_settings_menu()
+        self.display_waiting_menu()
+
 def main():
     m = ServerMenu()
-    m.display_settings_menu()
+    m.run()
 
 if __name__ == "__main__":
     main()

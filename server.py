@@ -23,7 +23,7 @@ class Server:
         
         self.server_socket.bind((self.host, self.port))
         self.server_socket.listen(5)
-        print(f"Server listening on {self.host}:{self.port}")
+        #print(f"Server listening on {self.host}:{self.port}")
 
         self.inputs = [self.server_socket]
 
@@ -52,7 +52,7 @@ class Server:
     def _handle_disconnection(self, s):
         #print(f"Client {s.getpeername()} disconnected.")
         self.inputs.remove(s)
-        self.connected_clients.remove(s)
+        self.connected_clients.pop(s)
         s.close()
 
     def check_connections(self):

@@ -51,7 +51,7 @@ class Client:
 
 def main():
     # Example usage
-    client = Client('192.168.0.113', 1302)
+    client = Client('192.168.0.113', 9695)
     client.connect()
 
     # Continuously send messages until the program is terminated
