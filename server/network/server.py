@@ -6,64 +6,57 @@ import time
 from shared.protocol import *
 from shared.map import *
 
+from constants.server import *
+
 class Server:
-    def __init__(self, host, port, map, max_clients):
+    def __init__(self, host, port, map, num_players):
         self.host = host
         self.port = port
         self.map = map
-        self.max_clients = max_clients
+        self.num_players = num_players
         self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.clients = []
         self.connected_clients = len(self.clients)
-        self.protocol = Protocol()
-
-        self.map.generate_new()
-
-    def handle_msg(self, msg_type, content):
-        match msg_type:
-            case 'P':
-                from_x = int(content[0])
-                from_y = int(content[1])
-                to_x = int(content[2])
-                to_y = int(content[3])
-                self.map.interaction(from_x, from_y, to_x, to_y)
-                
+        self.id_list = [_ for _ in range(1, self.num_players+1)]
 
     def start(self):
         self.server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.server_socket.bind((self.host, self.port))
-        self.server_socket.listen(self.max_clients)
+        self.server_socket.listen(self.num_players)
         print(f'Server listening on {self.host}:{self.port}')
 
         try:
-            while len(self.clients) < self.max_clients:
+            while len(self.clients) < self.num_players:
                 self._accept_new_clients()
                 self._check_connected_clients()
+            self.map.generate_new(self.num_players)
 
             print('Reached the maximum number of clients.')
+            for s in self.clients:
+                print(self.clients.index(s)+1)
 
             gen_counter = 0
             while True:
                 # Create and send the map message after updating the army values
-                map_msg = self.protocol.create_map_msg(self.map)
                 for s in self.clients:
+                    map_msg = Protocol.create_map_msg(self.map, self.clients.index(s)+1)
                     s.sendall(map_msg.encode('utf-8'))
 
                 readable, _, _ = select.select(self.clients, [], [], 0.2)
                 for s in readable:
-                    msg_type, content = self.protocol.get_message(self.clients[0])
+                    msg_type, content = Protocol.get_message(s)
                     if content and content != "":
-                        self.handle_msg(msg_type, content)
+                        Protocol.handle_msg(msg_type, content, self.map)
 
 
                 # Update army values first
                 for y in range(ROWS):
                     for x in range(COLS):
                         tile = self.map.tiles[y][x]
-                        if tile.army > 0 and gen_counter > 9:
+                        if tile.army > 0 and gen_counter > GEN_TO_RESET:
                             tile.army += 1
 
-                if gen_counter >= 10:
+                if gen_counter >= GEN_TO_RESET:
                     gen_counter = 0
                 else:
                     gen_counter += 1
@@ -77,26 +70,6 @@ class Server:
         finally:
             self.cleanup()
 
-
-    def run_game(self):
-        initial_number = random.randint(1, 100)
-        for client_handler in self.clients:
-            client_handler.client_socket.sendall(str(initial_number).encode('utf-8'))
-
-        try:
-            while True:
-                readable_sockets = self._get_readable_sockets()
-                for client_socket in readable_sockets:
-                    client_handler = self._get_client_handler(client_socket)
-                    if client_handler:
-                        if not client_handler.communicate():
-                            self.clients.remove(client_handler)
-                            client_handler.close()
-                            self.print_client_stats()
-        except Exception as e:
-            print(f"Error in communication: {e}")
-            pass
-
     def get_ip(self):
         with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
             s.connect(('8.8.8.8', 1))
@@ -107,7 +80,7 @@ class Server:
         readable, _, _ = select.select([self.server_socket], [], [], 1)
         if self.server_socket in readable:
             client_socket, client_address = self.server_socket.accept()
-            if len(self.clients) < self.max_clients:
+            if len(self.clients) < self.num_players:
                 self.clients.append(client_socket)
                 self.print_client_stats()
             else:
@@ -147,10 +120,11 @@ class Server:
 
     def print_client_stats(self):
         current_connections = len(self.clients)
-        print(f'Current connections: {current_connections}/{self.max_clients}')
+        print(f'Current connections: {current_connections}/{self.num_players}')
 
 if __name__ == "__main__":
-    map = Map(1)
-    server = Server('127.0.0.99', 12345, map, 1)
+    num_players = 2
+    map = Map()
+    server = Server('127.0.0.99', 12345, map, num_players)
 
     server.start()

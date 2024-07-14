@@ -4,6 +4,7 @@ import threading
 import time
 from client.network.client import *
 from shared.map import *
+from shared.protocol import *
 from constants.game import *
 from constants.colors import *
 
@@ -14,10 +15,10 @@ pygame.display.set_caption("Generals.io-like Game")
 
 class Game:
     def __init__(self):
-        self.num_players = 1
-        self.map = Map(self.num_players)
+        self.map = Map()
         self.client = Client('127.0.0.99', 12345, self.map)
         self.clock = pygame.time.Clock()
+        self.id = None
 
         if self.client.connect():
             print("Connected to server...")
@@ -43,9 +44,9 @@ class Game:
             msg_thread.join()
 
     def get_message(self):
-        msg_type, content = self.client.protocol.get_message(self.client.client_socket)
+        msg_type, content = Protocol.get_message(self.client.client_socket)
         if content and content != "":
-            self.client.handle_msg(msg_type, content)
+            Protocol.handle_msg(msg_type, content, self.map)
 
     def print_map(self):
         while True:
