@@ -29,11 +29,12 @@ class Protocol:
             return ""
     
     @staticmethod
-    def handle_msg(msg_type: str, content: dict, map):
+    def handle_msg(msg_type: str, content: dict, map, idlist=None, clients=None, s=None):
         msg_type = msg_type.upper()
         if msg_type == 'M':
-            id = content['id'] # use later, probably for colors in game.py
+            idlist.append(int(content['id'])) # use later, probably for colors in game.py
             tiles = content['tiles']
+
             tiles = tiles.split('&')
 
             for tile in tiles:
@@ -60,7 +61,9 @@ class Protocol:
             from_y = int(coordinates[1])
             to_x = int(coordinates[2])
             to_y = int(coordinates[3])
-            map.interaction(from_x, from_y, to_x, to_y)
+
+            if int(map.tiles[from_y][from_x].owner) == int(clients.index(s)+1):
+                map.interaction(from_x, from_y, to_x, to_y, int(clients.index(s)+1))
     
     @staticmethod
     def complete_msg(msg):

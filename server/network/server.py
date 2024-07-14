@@ -32,8 +32,6 @@ class Server:
             self.map.generate_new(self.num_players)
 
             print('Reached the maximum number of clients.')
-            for s in self.clients:
-                print(self.clients.index(s)+1)
 
             gen_counter = 0
             while True:
@@ -46,7 +44,7 @@ class Server:
                 for s in readable:
                     msg_type, content = Protocol.get_message(s)
                     if content and content != "":
-                        Protocol.handle_msg(msg_type, content, self.map)
+                        Protocol.handle_msg(msg_type, content, self.map, clients=self.clients, s=s)
 
 
                 # Update army values first

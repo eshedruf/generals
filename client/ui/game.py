@@ -28,14 +28,18 @@ class Game:
         while self.map.tiles[0][0] is None:
             time.sleep(0.05)
 
+        print("id:", self.id)
+
         self.selected_tile = None
         for y in range(ROWS):
             for x in range(COLS):
-                if self.map.tiles[y][x].owner == 1:
+                if self.map.tiles[y][x].owner == self.id:
                     self.selected_tile = [x, y]
                     break
             if self.selected_tile is not None:
                 break
+
+        print("selected tile:", self.selected_tile)
 
     def client_communication(self):
         while True:
@@ -46,7 +50,9 @@ class Game:
     def get_message(self):
         msg_type, content = Protocol.get_message(self.client.client_socket)
         if content and content != "":
-            Protocol.handle_msg(msg_type, content, self.map)
+            idlist = []
+            Protocol.handle_msg(msg_type, content, self.map, idlist=idlist)
+            self.id = idlist[0]
 
     def print_map(self):
         while True:
@@ -72,6 +78,8 @@ class Game:
                 rect = pygame.Rect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE)
                 if tile.owner == 1:
                     pygame.draw.rect(screen, BLUE, rect)
+                if tile.owner == 2:
+                    pygame.draw.rect(screen, RED, rect)
                 if self.selected_tile is not None:
                     selected_rect = pygame.Rect(self.selected_tile[0] * TILE_SIZE, self.selected_tile[1] * TILE_SIZE, TILE_SIZE, TILE_SIZE)
                     pygame.draw.rect(screen, GREEN, selected_rect, 2)
@@ -112,7 +120,7 @@ class Game:
         x, y = tile_pos
         # Check if the clicked tile is within the bounds of the map
         if 0 <= x < COLS and 0 <= y < ROWS:
-            if self.map.tiles[y][x].owner == 1:
+            if self.map.tiles[y][x].owner == self.id:
                 self.selected_tile = tile_pos
                 return True
             else:
