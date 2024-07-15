@@ -76,10 +76,8 @@ class Game:
             for x in range(COLS):
                 tile = self.map.tiles[y][x]
                 rect = pygame.Rect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE)
-                if tile.owner == 1:
-                    pygame.draw.rect(screen, BLUE, rect)
-                if tile.owner == 2:
-                    pygame.draw.rect(screen, RED, rect)
+                if tile.owner > 0:
+                    pygame.draw.rect(screen, PLAYER_COLORS[tile.owner-1], rect)
                 if self.selected_tile is not None:
                     selected_rect = pygame.Rect(self.selected_tile[0] * TILE_SIZE, self.selected_tile[1] * TILE_SIZE, TILE_SIZE, TILE_SIZE)
                     pygame.draw.rect(screen, GREEN, selected_rect, 2)
@@ -101,20 +99,23 @@ class Game:
         x = self.selected_tile[0]
         y = self.selected_tile[1]
 
-        if direction == UP and y > 0:
+        if direction == UP and ROWS > y > 0:
             position = [x, y - 1]
             self.client.send_action(x, y, x, y-1)
-        elif direction == DOWN and y < ROWS - 1:
+        elif direction == DOWN and 0 <= y < ROWS - 1:
             position = [x, y + 1]
             self.client.send_action(x, y, x, y+1)
-        elif direction == LEFT and x > 0:
+        elif direction == LEFT and COLS > x > 0:
             position = [x - 1, y]
             self.client.send_action(x, y, x-1, y)
-        elif direction == RIGHT and x < COLS - 1:
+        elif direction == RIGHT and 0 <= x < COLS - 1:
             position = [x + 1, y]
             self.client.send_action(x, y, x+1, y)
+        else:
+            position = None
 
-        self.selected_tile = position
+        if position is not None:
+            self.selected_tile = position
 
     def select_tile(self, tile_pos):
         x, y = tile_pos

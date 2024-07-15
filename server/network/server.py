@@ -46,15 +46,14 @@ class Server:
                     if content and content != "":
                         Protocol.handle_msg(msg_type, content, self.map, clients=self.clients, s=s)
 
-
-                # Update army values first
-                for y in range(ROWS):
-                    for x in range(COLS):
-                        tile = self.map.tiles[y][x]
-                        if tile.army > 0 and gen_counter > GEN_TO_RESET:
-                            tile.army += 1
-
                 if gen_counter >= GEN_TO_RESET:
+                    # Update army values first
+                    for y in range(ROWS):
+                        for x in range(COLS):
+                            tile = self.map.tiles[y][x]
+                            if tile.army > 0:
+                                tile.army += 1
+
                     gen_counter = 0
                 else:
                     gen_counter += 1
@@ -121,7 +120,7 @@ class Server:
         print(f'Current connections: {current_connections}/{self.num_players}')
 
 if __name__ == "__main__":
-    num_players = 2
+    num_players = 8
     map = Map()
     server = Server('127.0.0.99', 12345, map, num_players)
 

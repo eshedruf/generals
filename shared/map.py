@@ -57,12 +57,12 @@ class Map:
                 print(str(self.tiles[y][x].army).ljust(3), end=' ')
             print()        
 
-    def interaction(self, from_x, from_y, to_x, to_y):
+    def interaction(self, from_x, from_y, to_x, to_y, id):
         from_tile = self.tiles[from_y][from_x]
         to_tile = self.tiles[to_y][to_x]
 
-        #if to_tile.army < 1 or from_tile.owner != 1:
-        if from_tile.owner != 1:
+        #if to_tile.army < 1 or from_tile.owner != id:
+        if from_tile.owner != id: # the army thing will be added later
             return
         
         # if interaction is between 2 tiles of the same player
@@ -85,6 +85,11 @@ class Map:
             to_tile.army = 1
         if from_tile.army < 1:
             from_tile.army = 1
+
+    def tile_exists(x, y):
+        if y < 0 or y >= ROWS or x < 0 or x >= COLS:
+            return False
+        return True
 
 
     def _calculate_min_distance(self, num_players):
