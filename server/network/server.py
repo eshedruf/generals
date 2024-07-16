@@ -39,7 +39,7 @@ class Server:
                         self.kings.append((x, y))
             #print('Reached the maximum number of clients.')
 
-            gen_counter = 0
+            turn_counter = 0
             while True:
                 # Create and send the map message after updating the army values
                 for s in self.clients:
@@ -56,15 +56,15 @@ class Server:
                 for y in range(ROWS):
                     for x in range(COLS):
                         tile = self.map.tiles[y][x]
-                        if gen_counter >= GEN_TO_RESET and tile.type == ARMY and tile.owner > 0:
+                        if turn_counter >= TURNS_TO_RESET and tile.type == ARMY and tile.owner > 0:
                             tile.army += 1
                         elif tile.type == KING or (tile.type == CITY and tile.owner > 0):
                             tile.army += 1
 
-                if gen_counter >= GEN_TO_RESET:
-                    gen_counter = 0
+                if turn_counter >= TURNS_TO_RESET:
+                    turn_counter = 0
                 else:
-                    gen_counter += 1
+                    turn_counter += 1
                 time.sleep(0.8)
                 
 

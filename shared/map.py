@@ -99,6 +99,28 @@ class Map:
                     if tile.type == KING:
                         tile.type = CITY
 
+    def check_near_tile(self, x, y, id):
+        """
+        if tile in (x,y) has a strange id that is not the id of the current player nor 0,
+        this function will check for this tile if it has any adjacent tiles that their id
+        is equal to the current player id (id)
+        """
+        # Check horizontal and vertical adjacents
+        if (0 <= x+1 < COLS and self.tiles[y][x+1].owner == id) or \
+        (0 <= x-1 < COLS and self.tiles[y][x-1].owner == id) or \
+        (0 <= y+1 < ROWS and self.tiles[y+1][x].owner == id) or \
+        (0 <= y-1 < ROWS and self.tiles[y-1][x].owner == id):
+            return True
+
+        # Check diagonal adjacents
+        if (0 <= x+1 < COLS and 0 <= y+1 < ROWS and self.tiles[y+1][x+1].owner == id) or \
+        (0 <= x-1 < COLS and 0 <= y+1 < ROWS and self.tiles[y+1][x-1].owner == id) or \
+        (0 <= x+1 < COLS and 0 <= y-1 < ROWS and self.tiles[y-1][x+1].owner == id) or \
+        (0 <= x-1 < COLS and 0 <= y-1 < ROWS and self.tiles[y-1][x-1].owner == id):
+            return True
+
+        return False
+
     def tile_exists(x, y):
         if y < 0 or y >= ROWS or x < 0 or x >= COLS:
             return False
