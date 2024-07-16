@@ -82,13 +82,15 @@ class Protocol:
         for y in range(ROWS):
             for x in range(COLS):
                 tile = map.tiles[y][x]
-                if tile.owner == id or tile.owner == 0 or Protocol._check_strange_tile(map, x, y, id):
+
+                if tile.owner == id or Protocol._check_strange_tile(map, x, y, id):
                     msg += Protocol._create_tile_msg(x, y, tile.army, tile.owner, tile.type)
                 else:
-                    if tile.army >= 1:
-                        msg += Protocol._create_tile_msg(x, y, 1, 0, 'A')
-                    else:
+                    if tile.type == MOUNTAIN or tile.type == CITY:
                         msg += Protocol._create_tile_msg(x, y, 0, 0, 'M')
+                    elif tile.type == ARMY or tile.type == KING:
+                        msg += Protocol._create_tile_msg(x, y, 1, 0, 'A')
+
                 msg += "&"
         msg = msg[:-1] # remove last & from msg
         msg = Protocol.complete_msg(msg)

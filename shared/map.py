@@ -31,7 +31,7 @@ class Map:
             # Check if the new position meets the minimum distance requirement from all existing kings
             if all(self._distance(pos, king_pos) > min_distance for king_pos in king_positions):
                 king_positions.append(pos)
-                self.tiles[y][x] = Tile(KING, owner=current_owner, army=999)
+                self.tiles[y][x] = Tile(KING, owner=current_owner, army=1)
                 current_owner += 1  # Increment owner for the next king
 
     def _finish_tiles(self):
@@ -43,9 +43,9 @@ class Map:
                     continue
                     
                 # currently ignoring cities
-                #if num < CITY_CHANCE:
-                    #self.tiles[y][x] = Tile(CITY, owner=0, army=1)
-                if num < MOUNTAIN_CHANCE:
+                if num < CITY_CHANCE:
+                    self.tiles[y][x] = Tile(CITY, owner=0, army=random.randint(38, 45))
+                elif num < MOUNTAIN_CHANCE:
                     self.tiles[y][x] = Tile(MOUNTAIN, owner=0, army=0)
                 else:
                     self.tiles[y][x] = Tile(ARMY, owner=0, army=1)
@@ -77,14 +77,27 @@ class Map:
             to_tile.army = to_tile.army - from_tile.army + 1
             from_tile.army = 1
         else: # if from_tile army bigger (can transfer ownership)
-            to_tile.army = from_tile.army - to_tile.army - 1
+            to_tile.army = from_tile.army - to_tile.army
             from_tile.army = 1
-            to_tile.owner = from_tile.owner
+            # if captured a king
+            if to_tile.type == KING:
+                self._convert_all_tiles(to_tile.owner, from_tile.owner)
+            else:
+                to_tile.owner = from_tile.owner
 
         if to_tile.army < 1:
             to_tile.army = 1
         if from_tile.army < 1:
             from_tile.army = 1
+    
+    def _convert_all_tiles(self, from_id, to_id):
+        for y in range(ROWS):
+            for x in range(COLS):
+                tile = self.tiles[y][x]
+                if tile.owner == from_id:
+                    tile.owner = to_id
+                    if tile.type == KING:
+                        tile.type = CITY
 
     def tile_exists(x, y):
         if y < 0 or y >= ROWS or x < 0 or x >= COLS:
@@ -105,8 +118,8 @@ if __name__ == '__main__':
     m.generate_new(6)
     for y in range(ROWS):
         for x in range(COLS):
-            print(m.tiles[y][x].owner, end=' ')
-        print()
+            ...#print(m.tiles[y][x].owner, end=' ')
+        #print()
 
     for y in range(ROWS):
         for x in range(COLS):

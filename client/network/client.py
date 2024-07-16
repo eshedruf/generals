@@ -11,6 +11,7 @@ class Client:
         self.map = map
         self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
+    # not used
     def start(self):
         self.connect()
         print("Connected to the server")

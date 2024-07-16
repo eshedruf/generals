@@ -18,12 +18,13 @@ class Server:
         self.clients = []
         self.connected_clients = len(self.clients)
         self.id_list = [_ for _ in range(1, self.num_players+1)]
+        self.kings = []
 
     def start(self):
         self.server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.server_socket.bind((self.host, self.port))
         self.server_socket.listen(self.num_players)
-        print(f'Server listening on {self.host}:{self.port}')
+        #print(f'Server listening on {self.host}:{self.port}')
 
         try:
             while len(self.clients) < self.num_players:
@@ -31,7 +32,12 @@ class Server:
                 self._check_connected_clients()
             self.map.generate_new(self.num_players)
 
-            print('Reached the maximum number of clients.')
+            for y in range(ROWS):
+                for x in range(COLS):
+                    tile = self.map.tiles[y][x]
+                    if tile.type == KING:
+                        self.kings.append((x, y))
+            #print('Reached the maximum number of clients.')
 
             gen_counter = 0
             while True:
@@ -46,14 +52,16 @@ class Server:
                     if content and content != "":
                         Protocol.handle_msg(msg_type, content, self.map, clients=self.clients, s=s)
 
-                if gen_counter >= GEN_TO_RESET:
-                    # Update army values first
-                    for y in range(ROWS):
-                        for x in range(COLS):
-                            tile = self.map.tiles[y][x]
-                            if tile.army > 0:
-                                tile.army += 1
+                # Update army values first
+                for y in range(ROWS):
+                    for x in range(COLS):
+                        tile = self.map.tiles[y][x]
+                        if gen_counter >= GEN_TO_RESET and tile.type == ARMY and tile.owner > 0:
+                            tile.army += 1
+                        elif tile.type == KING or (tile.type == CITY and tile.owner > 0):
+                            tile.army += 1
 
+                if gen_counter >= GEN_TO_RESET:
                     gen_counter = 0
                 else:
                     gen_counter += 1
@@ -61,7 +69,7 @@ class Server:
                 
 
         
-        except BrokenPipeError:
+        except (BrokenPipeError, ValueError):
             s.close()
 
         finally:
@@ -117,10 +125,10 @@ class Server:
 
     def print_client_stats(self):
         current_connections = len(self.clients)
-        print(f'Current connections: {current_connections}/{self.num_players}')
+        #print(f'Current connections: {current_connections}/{self.num_players}')
 
 if __name__ == "__main__":
-    num_players = 8
+    num_players = 2
     map = Map()
     server = Server('127.0.0.99', 12345, map, num_players)
 
