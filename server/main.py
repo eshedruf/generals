@@ -5,20 +5,21 @@ import threading
 import random
 
 def main():
-    map = Map(1)
+    map = Map()
     server = Server('127.0.0.99', 12345, map, 1)
+    """
+    
+    server.start()"""
 
-    server.start()
-
-    """menu = CLIMenu(server)
+    menu = CLIMenu(server)
     menu.display_settings_menu()
 
-    server.max_clients = menu.connection_count
+    server.num_players = menu.connection_count
 
     server_thread = threading.Thread(target=server.start)
     server_thread.start()
 
-    menu.display_waiting_menu()"""
+    menu.display_waiting_menu()
 
 if __name__ == '__main__':
     main()

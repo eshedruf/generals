@@ -1,0 +1,14 @@
+WIDTH = 850
+HEIGHT = 850
+
+ROWS = 25
+COLS = 25
+
+TILE_SIZE = WIDTH // COLS
+
+FPS = 10
+
+UP = 'U'
+DOWN = 'D'
+LEFT = 'L'
+RIGHT = 'R'

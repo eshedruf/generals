@@ -1,4 +1,5 @@
 import sys
+import os
 import pygame
 import threading
 import time
@@ -19,6 +20,21 @@ class Game:
         self.client = Client('127.0.0.99', 12345, self.map)
         self.clock = pygame.time.Clock()
         self.id = None
+
+        # Load and scale sprites once
+        base_path = os.path.dirname(__file__)
+        SCALE_SIZE = 0.85 * TILE_SIZE
+        self.sprites = {
+            KING: pygame.transform.scale(pygame.image.load(os.path.join(base_path, 'assets', 'crown.png')), (SCALE_SIZE, SCALE_SIZE)),
+            CITY: pygame.transform.scale(pygame.image.load(os.path.join(base_path, 'assets', 'city.png')), (SCALE_SIZE, SCALE_SIZE)),
+            MOUNTAIN: pygame.transform.scale(pygame.image.load(os.path.join(base_path, 'assets', 'mountain.png')), (SCALE_SIZE, SCALE_SIZE))
+        }
+
+        # Calculate offsets for centering sprites
+        self.sprite_offset = (TILE_SIZE - SCALE_SIZE) / 2
+
+        # Create font object once
+        self.font = pygame.font.SysFont(None, 24)
 
         if self.client.connect():
             print("Connected to server...")
@@ -64,63 +80,68 @@ class Game:
 
             print("\n\n\n")
             time.sleep(1)
-            
-    def draw_grid(self):
-        for x in range(0, WIDTH, TILE_SIZE):
-            for y in range(0, HEIGHT, TILE_SIZE):
-                rect = pygame.Rect(x, y, TILE_SIZE, TILE_SIZE)
-                pygame.draw.rect(screen, BLACK, rect, 1)
 
-    def draw_tiles(self):
+    def draw_all(self):
+        dirty_rects = []
+
         for y in range(ROWS):
             for x in range(COLS):
                 tile = self.map.tiles[y][x]
+
                 rect = pygame.Rect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE)
+                
+                # Draw colors
                 if tile.owner > 0:
-                    pygame.draw.rect(screen, PLAYER_COLORS[tile.owner-1], rect)
+                    pygame.draw.rect(screen, PLAYER_COLORS[tile.owner - 1], rect)
+                elif tile.owner == 0:
+                    if tile.type == ARMY:
+                        pygame.draw.rect(screen, LIGHT_GRAY, rect)
+                    elif tile.type == MOUNTAIN:
+                        pygame.draw.rect(screen, MIDDLE_GRAY, rect)
+                    elif tile.type == CITY:
+                        pygame.draw.rect(screen, DARK_GRAY, rect)
                 if self.selected_tile is not None:
                     selected_rect = pygame.Rect(self.selected_tile[0] * TILE_SIZE, self.selected_tile[1] * TILE_SIZE, TILE_SIZE, TILE_SIZE)
                     pygame.draw.rect(screen, GREEN, selected_rect, 2)
 
-    def draw_armies(self):
-        font = pygame.font.SysFont(None, 24)
-        for y in range(ROWS):
-            for x in range(COLS):
-                tile = self.map.tiles[y][x]
-                if tile is not None:
-                    army_text = font.render(str(tile.army), True, BLACK)
+                # Draw sprites
+                sprite = self.sprites.get(tile.type)
+                if sprite:
+                    sprite_pos = (x * TILE_SIZE + self.sprite_offset, y * TILE_SIZE + self.sprite_offset)
+                    screen.blit(sprite, sprite_pos)
+
+                # Draw armies
+                if tile.type != MOUNTAIN and not (tile.type == ARMY and tile.owner == 0):
+                    army_text = self.font.render(str(tile.army), True, WHITE)
                     text_rect = army_text.get_rect(center=(x * TILE_SIZE + TILE_SIZE / 2, y * TILE_SIZE + TILE_SIZE / 2))
                     screen.blit(army_text, text_rect)
 
-    def move(self, direction):
-        if self.selected_tile is None:
+                # Draw grid
+                pygame.draw.rect(screen, BLACK, rect, 1)
+
+                dirty_rects.append(rect)
+
+        return dirty_rects
+
+    def move(self, to_x, to_y):
+        from_x = self.selected_tile[0]
+        from_y = self.selected_tile[1]
+
+        if self.selected_tile is None or not self._check_exist(to_x, to_y) \
+        or self.map.tiles[from_y][from_x].type == MOUNTAIN \
+        or self.map.tiles[to_y][to_x].type == MOUNTAIN:
             return
         
-        x = self.selected_tile[0]
-        y = self.selected_tile[1]
+        self.client.send_action(from_x, from_y, to_x, to_y)
+        self.selected_tile = [to_x, to_y]
 
-        if direction == UP and ROWS > y > 0:
-            position = [x, y - 1]
-            self.client.send_action(x, y, x, y-1)
-        elif direction == DOWN and 0 <= y < ROWS - 1:
-            position = [x, y + 1]
-            self.client.send_action(x, y, x, y+1)
-        elif direction == LEFT and COLS > x > 0:
-            position = [x - 1, y]
-            self.client.send_action(x, y, x-1, y)
-        elif direction == RIGHT and 0 <= x < COLS - 1:
-            position = [x + 1, y]
-            self.client.send_action(x, y, x+1, y)
-        else:
-            position = None
-
-        if position is not None:
-            self.selected_tile = position
+    def _check_exist(self, x, y):
+        return 0 <= x < COLS and 0 <= y < ROWS
 
     def select_tile(self, tile_pos):
         x, y = tile_pos
         # Check if the clicked tile is within the bounds of the map
-        if 0 <= x < COLS and 0 <= y < ROWS:
+        if self._check_exist(x, y):
             if self.map.tiles[y][x].owner == self.id:
                 self.selected_tile = tile_pos
                 return True
@@ -131,22 +152,22 @@ class Game:
             self.selected_tile = None  # Ensure to clear selection if out of bounds
             return False
 
-
-
     def handle_events(self):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit()
-            elif event.type == pygame.KEYDOWN:
+            elif event.type == pygame.KEYDOWN and self.selected_tile is not None:
+                x = self.selected_tile[0]
+                y = self.selected_tile[1]
                 if event.key == pygame.K_UP or event.key == pygame.K_w:
-                    self.move(UP)
+                    self.move(x, y-1)
                 elif event.key == pygame.K_DOWN or event.key == pygame.K_s:
-                    self.move(DOWN)
+                    self.move(x, y+1)
                 elif event.key == pygame.K_LEFT or event.key == pygame.K_a:
-                    self.move(LEFT)
+                    self.move(x-1, y)
                 elif event.key == pygame.K_RIGHT or event.key == pygame.K_d:
-                    self.move(RIGHT)
+                    self.move(x+1, y)
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 mouse_pos = pygame.mouse.get_pos()
                 tile_pos = (mouse_pos[0] // TILE_SIZE, mouse_pos[1] // TILE_SIZE) # (x < COLS, y < ROWS)
@@ -156,10 +177,8 @@ class Game:
         while True:
             self.handle_events()
             screen.fill(WHITE)
-            self.draw_grid()
-            self.draw_tiles()
-            self.draw_armies()
-            pygame.display.flip()
+            dirty_rects = self.draw_all()
+            pygame.display.update(dirty_rects)
             self.clock.tick(FPS)
 
 def main():
