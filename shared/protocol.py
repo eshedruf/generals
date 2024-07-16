@@ -83,7 +83,7 @@ class Protocol:
             for x in range(COLS):
                 tile = map.tiles[y][x]
 
-                if tile.owner == id or Protocol._check_strange_tile(map, x, y, id):
+                if tile.owner == id or map.check_near_tile(x, y, id):
                     msg += Protocol._create_tile_msg(x, y, tile.army, tile.owner, tile.type)
                 else:
                     if tile.type == MOUNTAIN or tile.type == CITY:
@@ -110,7 +110,7 @@ class Protocol:
 
     @staticmethod
     def create_action_msg(from_x, from_y, to_x, to_y):
-        if not Protocol._adjacent(from_x, from_y, to_x, to_y):
+        if not Protocol._check_can_move(from_x, from_y, to_x, to_y):
             return False
         
         from_x = str(from_x).zfill(2)
@@ -123,32 +123,9 @@ class Protocol:
         msg = Protocol.complete_msg(msg)
 
         return msg
-    
-    @staticmethod
-    def _check_strange_tile(map, x, y, id):
-        """
-        if tile in (x,y) has a strange id that is not the id of the current player nor 0,
-        this function will check for this tile if it has any adjacent tiles that their id
-        is equal to the current player id (id)
-        """
-        # Check horizontal and vertical adjacents
-        if (0 <= x+1 < COLS and map.tiles[y][x+1].owner == id) or \
-        (0 <= x-1 < COLS and map.tiles[y][x-1].owner == id) or \
-        (0 <= y+1 < ROWS and map.tiles[y+1][x].owner == id) or \
-        (0 <= y-1 < ROWS and map.tiles[y-1][x].owner == id):
-            return True
-
-        # Check diagonal adjacents
-        if (0 <= x+1 < COLS and 0 <= y+1 < ROWS and map.tiles[y+1][x+1].owner == id) or \
-        (0 <= x-1 < COLS and 0 <= y+1 < ROWS and map.tiles[y+1][x-1].owner == id) or \
-        (0 <= x+1 < COLS and 0 <= y-1 < ROWS and map.tiles[y-1][x+1].owner == id) or \
-        (0 <= x-1 < COLS and 0 <= y-1 < ROWS and map.tiles[y-1][x-1].owner == id):
-            return True
-
-        return False
 
     @staticmethod
-    def _adjacent(from_x, from_y, to_x, to_y):
+    def _check_can_move(from_x, from_y, to_x, to_y):
         if (from_x < 0 or from_x >= COLS or
             from_y < 0 or from_y >= ROWS or
             to_x < 0 or to_x >= COLS or

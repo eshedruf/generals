@@ -11,6 +11,8 @@ from constants.colors import *
 
 sys.stdout.flush()
 
+pygame.init()
+
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Generals.io-like Game")
 
@@ -27,7 +29,8 @@ class Game:
         self.sprites = {
             KING: pygame.transform.scale(pygame.image.load(os.path.join(base_path, 'assets', 'crown.png')), (SCALE_SIZE, SCALE_SIZE)),
             CITY: pygame.transform.scale(pygame.image.load(os.path.join(base_path, 'assets', 'city.png')), (SCALE_SIZE, SCALE_SIZE)),
-            MOUNTAIN: pygame.transform.scale(pygame.image.load(os.path.join(base_path, 'assets', 'mountain.png')), (SCALE_SIZE, SCALE_SIZE))
+            MOUNTAIN: pygame.transform.scale(pygame.image.load(os.path.join(base_path, 'assets', 'mountain.png')), (SCALE_SIZE, SCALE_SIZE)),
+            'OBSTACLE': pygame.transform.scale(pygame.image.load(os.path.join(base_path, 'assets', 'obstacle.png')), (SCALE_SIZE, SCALE_SIZE))
         }
 
         # Calculate offsets for centering sprites
@@ -89,23 +92,49 @@ class Game:
                 tile = self.map.tiles[y][x]
 
                 rect = pygame.Rect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE)
-                
-                # Draw colors
-                if tile.owner > 0:
-                    pygame.draw.rect(screen, PLAYER_COLORS[tile.owner - 1], rect)
-                elif tile.owner == 0:
-                    if tile.type == ARMY:
-                        pygame.draw.rect(screen, LIGHT_GRAY, rect)
-                    elif tile.type == MOUNTAIN:
-                        pygame.draw.rect(screen, MIDDLE_GRAY, rect)
-                    elif tile.type == CITY:
-                        pygame.draw.rect(screen, DARK_GRAY, rect)
+
+                if self.map.check_near_tile(x, y, self.id) or tile.owner == self.id:
+                    # Conditions based on tile type and owner when near the player's tiles
+                    if tile.owner == 0:
+                        if tile.type == MOUNTAIN:
+                            pygame.draw.rect(screen, MIDDLE_GRAY, rect)
+                            sprite = self.sprites.get(MOUNTAIN)
+                        elif tile.type == CITY:
+                            pygame.draw.rect(screen, DARK_GRAY, rect)
+                            sprite = self.sprites.get(CITY)
+                        elif tile.type == ARMY:
+                            pygame.draw.rect(screen, LIGHT_GRAY, rect)
+                            sprite = None
+                    else:
+                        pygame.draw.rect(screen, PLAYER_COLORS[tile.owner - 1], rect)
+                        if tile.type == MOUNTAIN:
+                            sprite = self.sprites.get(MOUNTAIN)
+                        elif tile.type == CITY:
+                            sprite = self.sprites.get(CITY)
+                        elif tile.type == KING:
+                            sprite = self.sprites.get(KING)
+                        else:
+                            sprite = None
+                else:
+                    # Default conditions for tiles
+                    if tile.owner > 0:
+                        pygame.draw.rect(screen, PLAYER_COLORS[tile.owner - 1], rect)
+                    elif tile.owner == 0:
+                        if tile.type == MOUNTAIN:
+                            pygame.draw.rect(screen, DARKER_GRAY, rect)
+                            sprite = self.sprites.get('OBSTACLE')
+                        elif tile.type == CITY:
+                            pygame.draw.rect(screen, DARKER_GRAY, rect)
+                            sprite = self.sprites.get('OBSTACLE')
+                        elif tile.type == ARMY:
+                            pygame.draw.rect(screen, DARKER_GRAY, rect)
+                            sprite = None
+
                 if self.selected_tile is not None:
                     selected_rect = pygame.Rect(self.selected_tile[0] * TILE_SIZE, self.selected_tile[1] * TILE_SIZE, TILE_SIZE, TILE_SIZE)
-                    pygame.draw.rect(screen, GREEN, selected_rect, 2)
+                    pygame.draw.rect(screen, WHITE, selected_rect, 2)
 
-                # Draw sprites
-                sprite = self.sprites.get(tile.type)
+                # Draw the sprite if available
                 if sprite:
                     sprite_pos = (x * TILE_SIZE + self.sprite_offset, y * TILE_SIZE + self.sprite_offset)
                     screen.blit(sprite, sprite_pos)
