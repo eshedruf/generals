@@ -1,4 +1,7 @@
 import pygame_menu
+import pygame
+import sys
+
 from pygame_menu.examples import create_example_window
 from typing import Tuple, Any
 from constants.game_menu import *
@@ -15,9 +18,9 @@ class GameMenu:
         self.client = client
 
         # Align IP address and port inputs in the center
-        self.name = self.menu.add.text_input('Player name (optional): ', maxchar=NAME_MAXCHAR, align=pygame_menu.locals.ALIGN_LEFT)
-        self.ipaddr = self.menu.add.text_input('IP Address: ', maxchar=IP_MAXCHAR, align=pygame_menu.locals.ALIGN_LEFT)
-        self.port = self.menu.add.text_input('Port: ', maxchar=PORT_MAXCHAR, align=pygame_menu.locals.ALIGN_LEFT)
+        #self.name = self.menu.add.text_input('Player name (optional): ', maxchar=NAME_MAXCHAR, align=pygame_menu.locals.ALIGN_LEFT)
+        self.ipaddr = self.menu.add.text_input('IP Address: ', maxchar=IP_MAXCHAR, align=pygame_menu.locals.ALIGN_LEFT, default='127.0.0.99')
+        self.port = self.menu.add.text_input('Port: ', maxchar=PORT_MAXCHAR, align=pygame_menu.locals.ALIGN_LEFT, default=12345)
         self.menu.add.button('Join', self.start_the_game)
         self.menu.add.button('Quit', pygame_menu.events.EXIT)
         
@@ -35,17 +38,36 @@ class GameMenu:
         Function that starts a game. This is raised by the menu button,
         here menu can be disabled, etc.
         """
-        ip = self.ipaddr.get_value()
-        port = self.port.get_value()
+        self.client.ip = self.ipaddr.get_value()
+        self.client.port = int(self.port.get_value())
 
-        if ip == '192.168.0.113' and port == '12345':
-            print(f'{ip}:{port}, Do the job here!')
-            self.error_label.set_title('')
-        else:
-            self.error_label.set_title('Invalid IP or Port!')
+        if self.client.connect():
+            pygame.quit()
 
     def run(self):
-        self.menu.mainloop(self.surface)
+        try:
+            clock = pygame.time.Clock()
+            running = True
+            while running:
+                events = pygame.event.get()
+                for event in events:
+                    if event.type == pygame.QUIT:
+                        running = False
+
+                    # Check if the Enter key was pressed
+                    if event.type == pygame.KEYDOWN and event.key == pygame.K_RETURN:
+                        # Check if the entered name is "name"
+                        self.start_the_game()
+
+                if not running:
+                    break
+                self.menu.update(events)
+                self.menu.draw(self.surface)
+                pygame.display.update()
+                clock.tick(30)
+            pygame.quit()
+        except Exception as e:
+            print(e)
 
 if __name__ == '__main__':
     game_menu = GameMenu()

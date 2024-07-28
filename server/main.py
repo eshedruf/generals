@@ -6,11 +6,8 @@ import random
 
 def main():
     map = Map()
-    server = Server('127.0.0.99', 12345, map, 1)
-    """
+    server = Server('0.0.0.0', 12345, map, 1)
     
-    server.start()"""
-
     menu = CLIMenu(server)
     menu.display_settings_menu()
 

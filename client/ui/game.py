@@ -9,17 +9,21 @@ from shared.protocol import *
 from constants.game import *
 from constants.colors import *
 
-sys.stdout.flush()
-
-pygame.init()
-
-screen = pygame.display.set_mode((WIDTH, HEIGHT))
-pygame.display.set_caption("Generals.io-like Game")
+# Define the sidebar width
+SIDEBAR_WIDTH = 50
 
 class Game:
-    def __init__(self):
+    def __init__(self, client):
+        sys.stdout.flush()
+
+        pygame.init()
+
+        # Adjust the screen size to include the sidebar
+        self.screen = pygame.display.set_mode((WIDTH + SIDEBAR_WIDTH, HEIGHT))
+        pygame.display.set_caption("Generals.io-like Game")
+
         self.map = Map()
-        self.client = Client('127.0.0.99', 12345, self.map)
+        self.client = client
         self.clock = pygame.time.Clock()
         self.id = None
 
@@ -36,14 +40,23 @@ class Game:
         # Calculate offsets for centering sprites
         self.sprite_offset = (TILE_SIZE - SCALE_SIZE) / 2
 
-        # Create font object once
+        # Create font objects
         self.font = pygame.font.SysFont(None, 24)
+        self.wait_font = pygame.font.SysFont(None, 100)
 
-        if self.client.connect():
+        if self.client.check_connected():
             print("Connected to server...")
             comm_thread = threading.Thread(target=self.client_communication)
             comm_thread.start()
-        
+        else:
+            exit("NOT CONNECTED")
+
+        self.screen.fill(BLACK)
+        waiting_text = self.wait_font.render("Waiting for players...", True, WHITE)
+        text_rect = waiting_text.get_rect(center=((WIDTH+SIDEBAR_WIDTH) / 2, HEIGHT / 2))
+        self.screen.blit(waiting_text, text_rect)
+        pygame.display.update()
+
         while self.map.tiles[0][0] is None:
             time.sleep(0.05)
 
@@ -97,16 +110,16 @@ class Game:
                     # Conditions based on tile type and owner when near the player's tiles
                     if tile.owner == 0:
                         if tile.type == MOUNTAIN:
-                            pygame.draw.rect(screen, MIDDLE_GRAY, rect)
+                            pygame.draw.rect(self.screen, MIDDLE_GRAY, rect)
                             sprite = self.sprites.get(MOUNTAIN)
                         elif tile.type == CITY:
-                            pygame.draw.rect(screen, DARK_GRAY, rect)
+                            pygame.draw.rect(self.screen, DARK_GRAY, rect)
                             sprite = self.sprites.get(CITY)
                         elif tile.type == ARMY:
-                            pygame.draw.rect(screen, LIGHT_GRAY, rect)
+                            pygame.draw.rect(self.screen, LIGHT_GRAY, rect)
                             sprite = None
                     else:
-                        pygame.draw.rect(screen, PLAYER_COLORS[tile.owner - 1], rect)
+                        pygame.draw.rect(self.screen, PLAYER_COLORS[tile.owner - 1], rect)
                         if tile.type == MOUNTAIN:
                             sprite = self.sprites.get(MOUNTAIN)
                         elif tile.type == CITY:
@@ -118,37 +131,46 @@ class Game:
                 else:
                     # Default conditions for tiles
                     if tile.owner > 0:
-                        pygame.draw.rect(screen, PLAYER_COLORS[tile.owner - 1], rect)
+                        pygame.draw.rect(self.screen, PLAYER_COLORS[tile.owner - 1], rect)
                     elif tile.owner == 0:
                         if tile.type == MOUNTAIN:
-                            pygame.draw.rect(screen, DARKER_GRAY, rect)
+                            pygame.draw.rect(self.screen, DARKER_GRAY, rect)
                             sprite = self.sprites.get('OBSTACLE')
                         elif tile.type == CITY:
-                            pygame.draw.rect(screen, DARKER_GRAY, rect)
+                            pygame.draw.rect(self.screen, DARKER_GRAY, rect)
                             sprite = self.sprites.get('OBSTACLE')
                         elif tile.type == ARMY:
-                            pygame.draw.rect(screen, DARKER_GRAY, rect)
+                            pygame.draw.rect(self.screen, DARKER_GRAY, rect)
                             sprite = None
 
                 if self.selected_tile is not None:
                     selected_rect = pygame.Rect(self.selected_tile[0] * TILE_SIZE, self.selected_tile[1] * TILE_SIZE, TILE_SIZE, TILE_SIZE)
-                    pygame.draw.rect(screen, WHITE, selected_rect, 2)
+                    pygame.draw.rect(self.screen, WHITE, selected_rect, 2)
 
                 # Draw the sprite if available
                 if sprite:
                     sprite_pos = (x * TILE_SIZE + self.sprite_offset, y * TILE_SIZE + self.sprite_offset)
-                    screen.blit(sprite, sprite_pos)
+                    self.screen.blit(sprite, sprite_pos)
 
                 # Draw armies
                 if tile.type != MOUNTAIN and not (tile.type == ARMY and tile.owner == 0):
                     army_text = self.font.render(str(tile.army), True, WHITE)
                     text_rect = army_text.get_rect(center=(x * TILE_SIZE + TILE_SIZE / 2, y * TILE_SIZE + TILE_SIZE / 2))
-                    screen.blit(army_text, text_rect)
+                    self.screen.blit(army_text, text_rect)
 
                 # Draw grid
-                pygame.draw.rect(screen, BLACK, rect, 1)
+                pygame.draw.rect(self.screen, BLACK, rect, 1)
 
                 dirty_rects.append(rect)
+
+        # Draw the sidebar with the player's color
+        if self.id is not None and (self.id - 1) < len(PLAYER_COLORS):
+            sidebar_color = PLAYER_COLORS[self.id - 1]
+        else:
+            sidebar_color = MIDDLE_GRAY  # Fallback color
+
+        sidebar_rect = pygame.Rect(WIDTH, 0, SIDEBAR_WIDTH, HEIGHT)
+        pygame.draw.rect(self.screen, sidebar_color, sidebar_rect)
 
         return dirty_rects
 
@@ -205,14 +227,14 @@ class Game:
     def run(self):
         while True:
             self.handle_events()
-            screen.fill(WHITE)
+            self.screen.fill(WHITE)
             dirty_rects = self.draw_all()
             pygame.display.update(dirty_rects)
             self.clock.tick(FPS)
 
 def main():
-    pygame.init()
-    game = Game()
+    client = Client()  # Assuming the Client class requires no arguments
+    game = Game(client)
     game.run()
 
 if __name__ == "__main__":
