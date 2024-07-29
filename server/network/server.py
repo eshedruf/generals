@@ -85,19 +85,19 @@ class Server:
         readable, _, _ = select.select([self.server_socket], [], [], 1)
         if self.server_socket in readable:
             client_socket, client_address = self.server_socket.accept()
-            if len(self.clients) < self.num_players:
+            if len(self.clients) < self.num_players: # client connected
                 self.clients.append(client_socket)
-                self.print_client_stats()
+                self.connected_clients = len(self.clients)
             else:
                 client_socket.close()
                 print('Max clients reached, rejecting new connection.')
 
     def _check_connected_clients(self):
         for client_socket in self.clients:
-            if not self._is_client_connected(client_socket):
+            if not self._is_client_connected(client_socket): # client removed
                 self.clients.remove(client_socket)
                 client_socket.close()
-                self.print_client_stats()
+                self.connected_clients = len(self.clients)
 
     def _is_client_connected(self, client_socket):
         try:
@@ -122,10 +122,6 @@ class Server:
         self.server_socket.close()
         for client_handler in self.clients:
             client_handler.close()
-
-    def print_client_stats(self):
-        current_connections = len(self.clients)
-        #print(f'Current connections: {current_connections}/{self.num_players}')
 
 if __name__ == "__main__":
     num_players = 2
