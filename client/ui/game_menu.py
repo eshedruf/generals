@@ -19,7 +19,7 @@ class GameMenu:
 
         # Align IP address and port inputs in the center
         #self.name = self.menu.add.text_input('Player name (optional): ', maxchar=NAME_MAXCHAR, align=pygame_menu.locals.ALIGN_LEFT)
-        self.ipaddr = self.menu.add.text_input('IP Address: ', maxchar=IP_MAXCHAR, align=pygame_menu.locals.ALIGN_LEFT, default='127.0.0.99')
+        self.ipaddr = self.menu.add.text_input('IP Address: ', maxchar=IP_MAXCHAR, align=pygame_menu.locals.ALIGN_LEFT)
         self.port = self.menu.add.text_input('Port: ', maxchar=PORT_MAXCHAR, align=pygame_menu.locals.ALIGN_LEFT, default=12345)
         self.menu.add.button('Join', self.start_the_game)
         self.menu.add.button('Quit', pygame_menu.events.EXIT)
@@ -69,6 +69,3 @@ class GameMenu:
         except Exception as e:
             print(e)
 
-if __name__ == '__main__':
-    game_menu = GameMenu()
-    game_menu.run()

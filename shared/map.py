@@ -135,15 +135,3 @@ class Map:
     def _distance(self, pos1, pos2):
         return np.sqrt((pos1[0] - pos2[0]) ** 2 + (pos1[1] - pos2[1]) ** 2)
     
-if __name__ == '__main__':
-    m = Map()
-    m.generate_new(6)
-    for y in range(ROWS):
-        for x in range(COLS):
-            ...#print(m.tiles[y][x].owner, end=' ')
-        #print()
-
-    for y in range(ROWS):
-        for x in range(COLS):
-            print(m.tiles[y][x].type, end=' ')
-        print()
