@@ -4,8 +4,7 @@ multi-cliented, and the players play against each other in real time.
 
 ## Running instructions
 1. Create a new python virtual environment inside the directory of the project with:
-   ```sh
-   python -m venv venv
+   `python -m venv venv`
    
 3. Activate the venv with:
    - Windows: `venv\Scripts\activate`
