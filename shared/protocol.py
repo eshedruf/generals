@@ -73,8 +73,8 @@ class Protocol:
             to_x = int(coordinates[2])
             to_y = int(coordinates[3])
 
-            if int(map.tiles[from_y][from_x].owner) == int(clients.index(s)+1):
-                map.interaction(from_x, from_y, to_x, to_y, int(clients.index(s)+1))
+            if int(map.tiles[from_y][from_x].owner) == int(client_sockets.index(s)+1):
+                map.interaction(from_x, from_y, to_x, to_y, int(client_sockets.index(s)+1))
     
     @staticmethod
     def complete_msg(msg):
