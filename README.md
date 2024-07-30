@@ -1,28 +1,25 @@
 # Generals
 This game is a fork of the game generals.io, rewritten from scratch in python. The game is
-Multi-cliented, and the players play against each other in real time.
+multi-cliented, and the players play against each other in real time.
 
 ## Running instructions
 1. Create a new python virtual environment inside the directory of the project with:
+   ```sh
    python -m venv venv
    
 3. Activate the venv with:
-   - Windows: venv\Scripts\activate
-   - Linux/Mac: source venv/bin/activate
-
-4. Install required modules:
-   pip install blessed numpy pygame pygame-menu
-   pip install -e .
-
+   - Windows: `venv\Scripts\activate`
+   - Linux/Mac: `source venv/bin/activate`
+4. Install required modules: \
+   `pip install blessed numpy pygame pygame-menu` \
+   `pip install -e .`
 5. To start a server, run:
-   - Windows: python server\main.py
-   - Linux/Mac: python server/main.py
-
+   - Windows: `python server\main.py`
+   - Linux/Mac: `python server/main.py`
 6. To start a client, run:
-   - Windows: python client\main.py
-   - Linux/Mac: python client/main.py
+   - Windows: `python client\main.py`
+   - Linux/Mac: `python client/main.py`
 
-* the "pip install -e ." is important for setuptools.
 
 ## How to play
 The map is made up of 25x25 tiles, and there are four types of tiles: king, army, mountain and city.
