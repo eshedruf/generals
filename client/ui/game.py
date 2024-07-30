@@ -232,10 +232,3 @@ class Game:
             pygame.display.update(dirty_rects)
             self.clock.tick(FPS)
 
-def main():
-    client = Client()  # Assuming the Client class requires no arguments
-    game = Game(client)
-    game.run()
-
-if __name__ == "__main__":
-    main()

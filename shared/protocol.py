@@ -29,7 +29,7 @@ class Protocol:
             return ""
     
     @staticmethod
-    def handle_msg(msg_type: str, content: dict, map, idlist=None, clients=None, s=None):
+    def handle_msg(msg_type: str, content: dict, map, idlist=None, client_sockets: list=None, s=None):
         msg_type = msg_type.upper()
         if msg_type == 'M':
             idlist.append(int(content['id'])) # use later, probably for colors in game.py
@@ -53,6 +53,17 @@ class Protocol:
                 map.tiles[y][x].army = army
                 map.tiles[y][x].owner = owner
                 map.tiles[y][x].type = tile_type
+
+        elif msg_type == 'P':
+            coordinates = content['coordinates']
+            coordinates = coordinates.split('&')
+            from_x = int(coordinates[0])
+            from_y = int(coordinates[1])
+            to_x = int(coordinates[2])
+            to_y = int(coordinates[3])
+
+            if int(map.tiles[from_y][from_x].owner) == int(client_sockets.index(s)+1):
+                map.interaction(from_x, from_y, to_x, to_y, int(client_sockets.index(s)+1))
 
         elif msg_type == 'P':
             coordinates = content['coordinates']
@@ -139,15 +150,5 @@ class Protocol:
         else:
             return False
 
-if __name__ == '__main__':
-    from shared.map import *
-
-    m = Map()
-
-    m.generate_new(3)
-    mapmsg = Protocol.create_map_msg(m, 2)
-    act = Protocol.create_action_msg(10, 15, 10, 16)
-    print()
-    #print(mapmsg.split("\r\n")[1].split(' ')[1].split('&')[:-1])
 
 

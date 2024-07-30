@@ -69,8 +69,8 @@ class CLIMenu:
             print(self.term.move_x(2) + self.term.bold_red("IP Address:"), self.server.get_ip())
             print(self.term.move_x(2) + self.term.bold_green(f"Port:"), str(self.server.port))
             while True:
-                if self.server.connected_clients == self.server.num_players:
+                if len(self.server.clients) == self.server.num_players:
                     return
                 print(self.term.move_y(4))  
-                print(self.term.move_x(2) + self.term.bold_blue("Connected Clients:"), str(self.server.connected_clients) + "/" + str(self.server.num_players))
+                print(self.term.move_x(2) + self.term.bold_blue("Connected Clients:"), str(len(self.server.clients)) + "/" + str(self.server.num_players))
                 time.sleep(1)

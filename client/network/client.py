@@ -25,10 +25,3 @@ class Client:
             return True
         except socket.error:
             return False
-
-if __name__ == "__main__":
-    ip = '127.0.0.99'
-    PORT = 12345
-    map = Map()
-    client = Client(ip, PORT, map)
-    client.connect()
